@@ -6,6 +6,25 @@
 #include <ets_sys.h>
 #include <gpio.h>
 
+
+
+/**
+ * @brief 
+ * @param arg
+ * @return 
+ */
+LOCAL void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg){
+  struct espconn *conn = (struct espconn *) arg;
+  os_printf("TCP connected\n");
+  espconn_regist_recvcb(conn, recv_cb);
+}
+/**
+ * @brief 
+ * @param data
+ * @param len
+ * @param ip_addr
+ * @return 
+ */
 LOCAL void ICACHE_FLASH_ATTR udp_tx_data(uint8_t *data, uint16_t len, uint32_t ip_addr){
   ip_addr_t addr;
   IP4_ADDR(&addr, 192, 168, 1, 80);
@@ -23,4 +42,57 @@ LOCAL void ICACHE_FLASH_ATTR udp_tx_data(uint8_t *data, uint16_t len, uint32_t i
     os_printf("espconn_sendto failed\n");
   }
   espconn_delete(&udp_tx);
+}
+/**
+ * @brief 
+ * @param event
+ * @return 
+ */
+LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
+    struct ip_info info;
+
+    // To determine what actually happened, we need to look at the event.
+    switch (event->event) {
+        case EVENT_STAMODE_CONNECTED: {
+            // We are connected as a station, but we don't have an IP address yet.
+            char ssid[33];
+            uint8_t len = event->event_info.connected.ssid_len;
+            if (len > 32) {
+                len = 32;
+            }
+            strncpy(ssid, event->event_info.connected.ssid, len + 1);
+            os_printf("Received EVENT_STAMODE_CONNECTED. "
+                      "SSID = %s, BSSID = "MACSTR", channel = %d.\n",
+                      ssid, MAC2STR(event->event_info.connected.bssid), event->event_info.connected.channel);
+            break;
+        }
+        case EVENT_STAMODE_DISCONNECTED: {
+            // We have been disconnected as a station.
+            char ssid[33];
+            uint8_t len = event->event_info.connected.ssid_len;
+            if (len > 32) {
+                len = 32;
+            }
+            strncpy(ssid, event->event_info.connected.ssid, len + 1);
+            os_printf("Received EVENT_STAMODE_DISCONNECTED. "
+                      "SSID = %s, BSSID = "MACSTR", channel = %d.\n",
+                      ssid, MAC2STR(event->event_info.disconnected.bssid), event->event_info.disconnected.reason);
+            last_addr = 0;
+            break;
+        }
+        case EVENT_STAMODE_GOT_IP:
+            //MQTT_Connect(&mqttClient);
+            // We have an IP address, ready to run. Return the IP address, too.
+            os_printf("Received EVENT_STAMODE_GOT_IP. IP = "IPSTR", mask = "IPSTR", gateway = "IPSTR"\n", 
+                      IP2STR(&event->event_info.got_ip.ip.addr), 
+                      IP2STR(&event->event_info.got_ip.mask.addr),
+                      IP2STR(&event->event_info.got_ip.gw));
+            break;
+        case EVENT_STAMODE_DHCP_TIMEOUT:
+            // We couldn't get an IP address via DHCP, so we'll have to try re-connecting.
+            os_printf("Received EVENT_STAMODE_DHCP_TIMEOUT.\n");
+            wifi_station_disconnect();
+            wifi_station_connect();
+            break;
+    }
 }

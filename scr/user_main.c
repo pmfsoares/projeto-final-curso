@@ -18,57 +18,6 @@ static volatile os_timer_t some_timer;
 MQTT_Client* mqttClient;
 
 LOCAL uint32_t last_addr = 0;
-/*
- * Call-back for changes in the WIFi connection's state.
- */
-LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
-    struct ip_info info;
-
-    // To determine what actually happened, we need to look at the event.
-    switch (event->event) {
-        case EVENT_STAMODE_CONNECTED: {
-            // We are connected as a station, but we don't have an IP address yet.
-            char ssid[33];
-            uint8_t len = event->event_info.connected.ssid_len;
-            if (len > 32) {
-                len = 32;
-            }
-            strncpy(ssid, event->event_info.connected.ssid, len + 1);
-            os_printf("Received EVENT_STAMODE_CONNECTED. "
-                      "SSID = %s, BSSID = "MACSTR", channel = %d.\n",
-                      ssid, MAC2STR(event->event_info.connected.bssid), event->event_info.connected.channel);
-            break;
-        }
-        case EVENT_STAMODE_DISCONNECTED: {
-            // We have been disconnected as a station.
-            char ssid[33];
-            uint8_t len = event->event_info.connected.ssid_len;
-            if (len > 32) {
-                len = 32;
-            }
-            strncpy(ssid, event->event_info.connected.ssid, len + 1);
-            os_printf("Received EVENT_STAMODE_DISCONNECTED. "
-                      "SSID = %s, BSSID = "MACSTR", channel = %d.\n",
-                      ssid, MAC2STR(event->event_info.disconnected.bssid), event->event_info.disconnected.reason);
-            last_addr = 0;
-            break;
-        }
-        case EVENT_STAMODE_GOT_IP:
-            //MQTT_Connect(&mqttClient);
-            // We have an IP address, ready to run. Return the IP address, too.
-            os_printf("Received EVENT_STAMODE_GOT_IP. IP = "IPSTR", mask = "IPSTR", gateway = "IPSTR"\n", 
-                      IP2STR(&event->event_info.got_ip.ip.addr), 
-                      IP2STR(&event->event_info.got_ip.mask.addr),
-                      IP2STR(&event->event_info.got_ip.gw));
-            break;
-        case EVENT_STAMODE_DHCP_TIMEOUT:
-            // We couldn't get an IP address via DHCP, so we'll have to try re-connecting.
-            os_printf("Received EVENT_STAMODE_DHCP_TIMEOUT.\n");
-            wifi_station_disconnect();
-            wifi_station_connect();
-            break;
-    }
-}
 
 static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args){
   MQTT_Client* client = (MQTT_Client*) args;

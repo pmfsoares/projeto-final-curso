@@ -9,6 +9,6 @@ LOCAL void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg);
 
 LOCAL void ICACHE_FLASH_ATTR recv_cb(void *arg, char *data, uint16_t len);
 
-
+LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event);
 
 #endif
