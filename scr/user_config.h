@@ -27,7 +27,8 @@
 #define INFO( format, ... )
 #endif
 
-/*
+
+/**
  * Application Settings
  * 
  */

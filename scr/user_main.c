@@ -59,27 +59,6 @@ void ICACHE_FLASH_ATTR user_init(){
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_GPIO1); 
   gpio_output_set(0, 0, (1 << pin), 0);
   
-  char ssid[32] = AP_SSID;
-  char password[64] = AP_PASSWORD;
-  struct station_config stationConf;
-  //Set wifi opmode
-
-  wifi_set_opmode(0x1);
-
-  os_memcpy(&stationConf.ssid, ssid, 32);
-  os_memcpy(&stationConf.password, password, 64);
-  wifi_station_set_config(&stationConf);
-  wifi_station_dhcpc_stop();
-
-  struct ip_info info;
-
-  IP4_ADDR(&info.ip, 192, 168, 1, 172);
-  IP4_ADDR(&info.gw, 192, 168, 1, 1);
-  IP4_ADDR(&info.netmask, 255, 255, 255, 0);
-
-  wifi_set_ip_info(STATION_IF, &info);
-  wifi_set_event_handler_cb(wifi_event_cb);
-
 
   /* MQTT SETUP
   MQTT_InitConnection(&mqttClient, MQTT_HOST, MQTT_PORT, DEFAULT_SECURITY);
