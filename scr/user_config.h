@@ -9,19 +9,12 @@
 #define MQTT_PORT     1883
 #define MQTT_BUF_SIZE   1024
 #define MQTT_KEEPALIVE    120  /*second*/
-
 #define MQTT_CLIENT_ID    "sensor_mic"
 #define MQTT_USER     "USER"
 #define MQTT_PASS     "PASS"
 #define MQTT_CLEAN_SESSION 1
 #define MQTT_KEEPALIVE 120
-
-
-#define AP_SSID "Soares Wifi"
-#define AP_PASSWORD "gjY5qDkQD3"
-
 #define MQTT_RECONNECT_TIMEOUT  5 /*second*/
-
 #define DEFAULT_SECURITY  0
 #define QUEUE_BUFFER_SIZE       2048
 
@@ -33,5 +26,15 @@
 #else
 #define INFO( format, ... )
 #endif
+
+/*
+ * Application Settings
+ * 
+ */
+#define num_samples 4000
+#define AP_SSID "Soares Wifi"
+#define AP_PASSWORD "gjY5qDkQD3"
+
+
 
 #endif // __MQTT_CONFIG_H__
