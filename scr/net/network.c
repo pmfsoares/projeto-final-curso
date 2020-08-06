@@ -1,11 +1,37 @@
 #include "network.h"
 
-#include <c_types.h>
-#include <osapi.h>
-#include <user_interface.h>
-#include <ets_sys.h>
-#include <gpio.h>
+#include "c_types.h"
+#include "osapi.h"
+#include "user_interface.h"
+#include "ets_sys.h"
+#include "gpio.h"
 
+
+LOCAL void wifi_init(){
+
+  char ssid[32] = AP_SSID;
+  char password[64] = AP_PASSWORD;
+
+  struct station_config stationConf;
+
+
+  wifi_set_opmode(STATION_MODE);
+
+  os_memcpy(&stationConf.ssid, ssid, 32);
+  os_memcpy(&stationConf.password, password, 64);
+  wifi_station_set_config(&stationConf);
+  wifi_station_dhcpc_stop();
+
+  struct ip_info info;
+
+  IP4_ADDR(&info.ip,      192, 168,   1, 172);
+  IP4_ADDR(&info.gw,      192, 168,   1,   1);
+  IP4_ADDR(&info.netmask, 255, 255, 255,   0);
+
+  wifi_set_ip_info(STATION_IF, &info);
+  wifi_set_event_handler_cb(wifi_event_cb);
+
+}
 
 
 /**
