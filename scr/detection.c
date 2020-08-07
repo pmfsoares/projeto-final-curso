@@ -1,11 +1,15 @@
 #include "detection.h"
 
 #include "user_config.h"
-#include "os_type.h"
-#include "math.h"
-#include "c_types.h"
 
-double mean(uint32_t arr[]){
+#include <stdint.h>
+#include <math.h>
+#include <c_types.h>
+
+
+uint16_t adc_num = num_samples;
+
+double mean(uint64_t arr[]){
   double total = 0;
   for(uint8_t i = 0; i < num_samples; i++){
     total += arr[i];
@@ -13,7 +17,7 @@ double mean(uint32_t arr[]){
   return total / num_samples;
 }
 
-double std(uint32_t arr[], double media){
+double std(uint64_t arr[], double media){
   double std = 0;
   for(int i = 0; i < num_samples; i++){
     std = std + (arr[i] * arr[i]);
@@ -22,7 +26,7 @@ double std(uint32_t arr[], double media){
   return sqrt(adc_num);
 }
 
-void powerSequence(uint32_t arr[]){
+void powerSequence(uint16_t arr[]){
   double sum = 0;
   for(uint8_t i = 0; i < num_samples; i++){
     sum = sum + (arr[i] * arr[i] ) * (i + k * num_samples);
@@ -32,12 +36,12 @@ void powerSequence(uint32_t arr[]){
   return;
 }
 
-double threshold(uint32_t sampleArr[]){
+double threshold(uint16_t sampleArr[]){
     powerSequence(sample_arr);
 
-    double mean_tmp = mean(sample_arr);
+    double mean_tmp = mean(power_arr);
 
-    double std_tmp = std(sample_arr, mean_tmp);
+    double std_tmp = std(power_arr, mean_tmp);
 
     double th = 1 * std_tmp + mean_tmp;
     return th;
