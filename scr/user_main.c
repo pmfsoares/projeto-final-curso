@@ -9,7 +9,9 @@
 #include <math.h>
 #include <mem.h>
 
-#include <estados.h>
+#include "state_machine.h"
+#include "detection.h"
+#include "network.h"
 
 static const int pin = 2;
 static const int pin_externo = 5;
