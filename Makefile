@@ -32,13 +32,13 @@ ESPPORT     ?= /dev/ttyUSB0
 TARGET      = projeto_header
 
 # which modules (subdirectories) of the project to include in compiling
-MODULES     = scr mqtt mqtt/include 
+MODULES     = scr src/include mqtt mqtt/include 
 EXTRA_INCDIR = 
 # libraries used in this project, mainly provided by the SDK
 LIBS        = c gcc hal pp phy net80211 lwip wpa main m 
 
 # compiler flags using during compilation of source files
-CFLAGS      = -Os -g -O2 -Wpointer-arith -Wundef -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH -DUSE_US_TIMER -D__TARGET_ESP__
+CFLAGS      = --std=gnu99 -Os -g -O2 -Wpointer-arith -Wundef -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH -DUSE_US_TIMER -D__TARGET_ESP__
 
 # linker flags used to generate the main object file
 LDFLAGS     = -nostdlib -fdata-sections -ffunction-sections -Wl,--no-check-sections -u call_user_start -Wl,-static
