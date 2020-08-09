@@ -5,8 +5,22 @@
 #include "user_interface.h"
 #include "ets_sys.h"
 #include "gpio.h"
+#include "espconn.h"
 
+LOCAL struct espconn udp_tx;
+LOCAL struct espconn udp_conn;
+LOCAL esp_udp udp_proto_tx;
+LOCAL esp_udp udp_proto;
 
+LOCAL struct espconn tcp_conn;
+LOCAL esp_tcp tcp_proto;
+
+LOCAL ip_addr_t esp_ip;
+
+/**
+ * @brief Função que inicializa Wifi
+ * @return 
+ */
 LOCAL void wifi_init(){
 
   char ssid[32] = AP_SSID;
@@ -45,10 +59,10 @@ LOCAL void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg){
   espconn_regist_recvcb(conn, recv_cb);
 }
 /**
- * @brief 
- * @param data
- * @param len
- * @param ip_addr
+ * @brief Função de para envio de dados em pacotes com UDP
+ * @param data    Dados
+ * @param len     Tamanho dos dados
+ * @param ip_addr IP de destino
  * @return 
  */
 LOCAL void ICACHE_FLASH_ATTR udp_tx_data(uint8_t *data, uint16_t len, uint32_t ip_addr){
@@ -103,7 +117,6 @@ LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
             os_printf("Received EVENT_STAMODE_DISCONNECTED. "
                       "SSID = %s, BSSID = "MACSTR", channel = %d.\n",
                       ssid, MAC2STR(event->event_info.disconnected.bssid), event->event_info.disconnected.reason);
-            last_addr = 0;
             break;
         }
         case EVENT_STAMODE_GOT_IP:
@@ -121,4 +134,20 @@ LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
             wifi_station_connect();
             break;
     }
+}
+
+LOCAL void ICACHE_FLASH_ATTR recv_cb(void *arg, char *data, uint16_t len){
+  struct espconn *conn = (struct espconn *) arg;
+  uint8_t *addr_array = NULL;
+  if(conn -> type == ESPCONN_TCP){
+    addr_array = conn->proto.tcp->remote_ip;
+  }else {
+    addr_array = conn->proto.udp->remote_ip;
+  }
+  if(addr_array != NULL){
+    ip_addr_t addr;
+    IP4_ADDR(&addr, addr_array[0], addr_array[1], addr_array[2], addr_array[3]);
+    char ip_str[15];
+    os_printf("%s", data);
+  }
 }
