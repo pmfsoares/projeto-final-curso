@@ -1,4 +1,4 @@
-#include "estados.h"
+#include "state_machine.h"
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
@@ -28,7 +28,7 @@ void state_machine(){
         break;
 
       case(PRE_RECORDING):
-
+        int th = 1;
         if(th){
           state = RECORDING;
         }else if(!th){
