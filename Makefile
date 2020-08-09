@@ -32,7 +32,7 @@ ESPPORT     ?= /dev/ttyUSB0
 TARGET      = projeto_header
 
 # which modules (subdirectories) of the project to include in compiling
-MODULES     = scr src/include mqtt mqtt/include 
+MODULES     = scr src/include mqtt mqtt/include
 EXTRA_INCDIR = 
 # libraries used in this project, mainly provided by the SDK
 LIBS        = c gcc hal pp phy net80211 lwip wpa main m 
