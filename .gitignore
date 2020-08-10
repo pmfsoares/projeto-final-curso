@@ -1,4 +1,6 @@
 build/
 firmware/
 *.o
+*.out
 .vscode/
+*.csv
