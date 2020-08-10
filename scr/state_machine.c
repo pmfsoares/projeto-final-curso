@@ -1,8 +1,4 @@
 #include "state_machine.h"
-#include "ets_sys.h"
-#include "osapi.h"
-#include "gpio.h"
-#include "os_type.h"
 
 enum states{
   SETUP,
@@ -17,24 +13,32 @@ enum states state = SETUP;
 void state_machine(){
   while(1){
     switch(state){
-      case(SETUP):
-
+      case(SETUP):{
+        #ifdef SIMULACAO
+          printf("SIMULACAO DEFINED");
+        #endif
+        #ifndef SIMULACAO
+          printf("NAO SIMULACAO");
+        #endif
 
         state = IDLE;
         break;
-      case(IDLE):
+      }
+      case(IDLE):{
 
         state = PRE_RECORDING;
         break;
-
-      case(PRE_RECORDING):
-        int th = 1;
+      }
+      case(PRE_RECORDING):{
+        int th;
+        th = 1;
         if(th){
           state = RECORDING;
         }else if(!th){
           state = IDLE;
         }
         break;
+      }
       case(RECORDING):{
                 
         state = TRANSMISSION;
@@ -43,7 +47,7 @@ void state_machine(){
       case(TRANSMISSION):
         state = IDLE;
         break;
-    }
+      }
   }
 }
 
