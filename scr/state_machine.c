@@ -1,10 +1,16 @@
-#include "include/state_machine.h"
 #include "user_config.h"
 
 #ifdef SIMULACAO
+
+#include "include/state_machine.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+
+#endif
+
+#ifndef SIMULACAO
+#include "include/state_machine.h"
 #endif
 
 enum states{
@@ -19,19 +25,18 @@ enum states state = SETUP;
 
 void state_engine(){
   while(1){
+
+  printf("\nEntering loop\n");
     switch(state){
       case(SETUP):{
         #ifdef SIMULACAO
 
-          printf("\nIs Define");
-          return;
+          printf("\nIs Defined");
         #endif
         #ifndef SIMULACAO
           printf("\nNot defined");
-          return;
         #endif
 
-        state = IDLE;
         break;
       }
       case(IDLE):{
@@ -60,5 +65,6 @@ void state_engine(){
       }
       return;
   }
+  printf("\nExited loop\n");
 }
 
