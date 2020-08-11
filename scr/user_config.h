@@ -32,6 +32,9 @@
  * Application Settings
  * 
  */
+
+#define SIMULACAO
+
 #define num_samples 4000
 #define AP_SSID "Soares Wifi"
 #define AP_PASSWORD "gjY5qDkQD3"
