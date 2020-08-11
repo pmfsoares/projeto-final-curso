@@ -1,6 +1,6 @@
-#ifndef ESTADOS_H
-#define ESTADOS_H
+#ifndef STATE_MACHINE_H
+#define STATE_MACHINE_H
 
-
+void state_engine();
 
 #endif
