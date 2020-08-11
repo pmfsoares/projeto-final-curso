@@ -1,6 +1,11 @@
 #include "include/state_machine.h"
 #include "user_config.h"
 
+#ifdef SIMULACAO
+#include <stdio.h>
+#include <stdlib.h>
+
+#endif
 
 enum states{
   SETUP,

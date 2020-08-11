@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "user_config.h"
 #include "include/state_machine.h"
 #include "include/simulation.h"

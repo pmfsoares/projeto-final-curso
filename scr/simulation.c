@@ -34,4 +34,5 @@ int readSamples(void *args){
         }
         count++;
     }
+    return 1;
 }
