@@ -19,16 +19,15 @@ FILE *  openFile(char *  name){
      return fp;
 }
 
-int readSamples(void *args){
-    count++;
-    if(count == 1){
+int readSamples(FILE * file_ptr){
+    size_t count = 0;
+    if(count == 0){
        char buffer[100];
-       fgets(buffer, 100, csv_file);
-       printf("\n%s", buffer);
+       fgets(buffer, 100, file_ptr);
+       //printf("\n%s\n", buffer);
     }
     count = 0;
-    while(fscanf(csv_file, "%lf,", &arr[count]) != EOF){
-        printf("\n%lf", arr[count]);
+    while(fscanf(file_ptr, "%lf,", &arr[count]) != EOF){
         if(count == num_samples){
             return 1;
         }
