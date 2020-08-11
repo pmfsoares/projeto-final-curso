@@ -4,3 +4,4 @@ firmware/
 *.out
 .vscode/
 *.csv
+*.gch
