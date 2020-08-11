@@ -128,8 +128,8 @@ $(BUILD_DIR):
 $(FW_BASE):
 	$(Q) mkdir -p $@
 
-simul: scr/simul.c
-	gcc scr/simul.c -I scr/include -lm
+simul: scr/simulation_main.c scr/simulation.c
+	gcc -Wall scr/simulation_main.c scr/simulation.c scr/state_machine.c -lm
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
 	$(ESPTOOL) --port $(ESPPORT) write_flash $(FW_FILE_1_ADDR) $(FW_FILE_1) $(FW_FILE_2_ADDR) $(FW_FILE_2)
