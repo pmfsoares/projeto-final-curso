@@ -30,9 +30,6 @@ void state_engine(states_t state){
         #ifdef SIMULACAO
           csv_file = openFile("samples.csv");
         #endif
-        #ifndef SIMULACAO
-          printf("\nNot defined");
-        #endif
         state = IDLE;
         break;
       }
@@ -41,7 +38,7 @@ void state_engine(states_t state){
         #ifdef SIMULACAO
           readSamples(csv_file, sample_arr);
           for(int a=0; a < num_samples/10; a++){
-             printf("\n%lf", sample_array[a]);
+             printf("\n%lf", sample_arr[a]);
           }
         #endif
         #ifndef SIMULACAO
