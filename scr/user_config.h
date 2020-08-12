@@ -40,5 +40,4 @@
 #define AP_PASSWORD "gjY5qDkQD3"
 
 
-
 #endif // __MQTT_CONFIG_H__

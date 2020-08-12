@@ -128,10 +128,12 @@ $(BUILD_DIR):
 $(FW_BASE):
 	$(Q) mkdir -p $@
 
-simul: scr/simulation_main.c scr/simulation.c
-	gcc -Wall -o simul scr/simulation_main.c scr/simulation.c scr/state_machine.c -lm
+simul: scr/simulation_main.c scr/simulation.c scr/state_machine.c scr/detection.c
+	gcc -Wall -o $@ $^ -I scr/include -I scr -lm
+
 
 clean_simul:
+
 	rm -f ./simul
 
 flash: $(FW_FILE_1) $(FW_FILE_2)

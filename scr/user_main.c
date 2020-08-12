@@ -10,7 +10,6 @@
 #include <mem.h>
 
 #include "state_machine.h"
-#include "detection.h"
 #include "network.h"
 
 static const int pin = 2;
