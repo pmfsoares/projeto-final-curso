@@ -48,7 +48,7 @@ void state_engine(states_t state){
         break;
       }
       case(PRE_RECORDING):{
-        k = powerSequence(sample_arr, power_arr);
+        k = powerSequence(sample_arr, power_arr, k);
         double th;
         th = threshold(power_arr);
         if(th > 0){

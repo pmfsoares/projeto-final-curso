@@ -26,14 +26,14 @@ double std(double * arr, double media){
   return sqrt(tmp);
 }
 
-int powerSequence(double * samples, double * power){
+int powerSequence(double * samples, double * power, uint16_t k){
   double sum = 0;
   for(uint8_t i = 0; i < num_samples; i++){
     sum = sum + (arr[i] * arr[i] ) * (i + k * num_samples);
   }
   sum = 1 / num_samples * sum;
   power[k] = sum;
-  k++
+  k++;
   return k;
 }
 
