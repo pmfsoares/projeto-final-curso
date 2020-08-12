@@ -1,53 +1,60 @@
 #include "user_config.h"
 
-#ifdef SIMULACAO
 
-#include "include/state_machine.h"
+#ifdef SIMULACAO
+#include "state_machine.h"
+#include "simulation.h"
+#include "detection.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+FILE * csv_file;
 
 #endif
 
 #ifndef SIMULACAO
-#include "include/state_machine.h"
+#include "state_machine.h"
 #endif
 
-enum states{
-  SETUP,
-  IDLE,
-  PRE_RECORDING,
-  RECORDING,
-  TRANSMISSION
-};
 
-enum states state = SETUP;
 
-void state_engine(){
+void state_engine(states_t state){
+  double sample_arr[num_samples];
+  double power_arr[num_samples/2];
+  uint16_t k = 0;
+  printf("\nENTROU\n");
   while(1){
-
-  printf("\nEntering loop\n");
     switch(state){
       case(SETUP):{
+        printf("\nSETUP\n");
         #ifdef SIMULACAO
-
-          printf("\nIs Defined");
+          csv_file = openFile("samples.csv");
         #endif
         #ifndef SIMULACAO
           printf("\nNot defined");
         #endif
-
+        state = IDLE;
         break;
       }
       case(IDLE):{
-
+        printf("\nON IDLE\n");
+        #ifdef SIMULACAO
+          readSamples(csv_file, sample_arr);
+          for(int a=0; a < num_samples/10; a++){
+             printf("\n%lf", sample_array[a]);
+          }
+        #endif
+        #ifndef SIMULACAO
+          printf("Not defined");
+        #endif
         state = PRE_RECORDING;
         break;
       }
       case(PRE_RECORDING):{
-        int th;
-        th = 1;
-        if(th){
+        k = powerSequence(sample_arr, power_arr);
+        double th;
+        th = threshold(power_arr);
+        if(th > 0){
           state = RECORDING;
         }else if(!th){
           state = IDLE;
@@ -59,11 +66,12 @@ void state_engine(){
         state = TRANSMISSION;
         break;
       }
-      case(TRANSMISSION):
+      case(TRANSMISSION):{
         state = IDLE;
+        return;
         break;
       }
-      return;
+    }
   }
   printf("\nExited loop\n");
 }
