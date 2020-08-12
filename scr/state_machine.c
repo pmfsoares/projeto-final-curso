@@ -48,9 +48,11 @@ void state_engine(states_t state){
         break;
       }
       case(PRE_RECORDING):{
+        printf("\nPre-Rec\n");
         k = powerSequence(sample_arr, power_arr, k);
         double th;
         th = threshold(power_arr);
+        printf("\nTh: %d", th);
         if(th > 0){
           state = RECORDING;
         }else if(!th){
@@ -59,11 +61,12 @@ void state_engine(states_t state){
         break;
       }
       case(RECORDING):{
-                
+        printf("\nRecording\n");
         state = TRANSMISSION;
         break;
       }
       case(TRANSMISSION):{
+        printf("\nTransmission\n");
         state = IDLE;
         return;
         break;
