@@ -9,7 +9,7 @@
 
 uint16_t adc_num = num_samples;
 
-double mean(double arr[]){
+double mean(double * arr){
   double total = 0;
   for(uint8_t i = 0; i < num_samples; i++){
     total += arr[i];
@@ -17,7 +17,7 @@ double mean(double arr[]){
   return total / num_samples;
 }
 
-double std(double arr[], double media){
+double std(double * arr, double media){
   double std = 0;
   for(int i = 0; i < num_samples; i++){
     std = std + (arr[i] * arr[i]);

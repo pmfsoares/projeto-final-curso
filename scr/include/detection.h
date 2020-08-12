@@ -4,15 +4,11 @@
 #include <user_config.h>
 #include <stdint.h>
 
-double sample_arr[num_samples];
-uint64_t power_arr[num_samples];
-uint16_t k;
+double mean(double * arr);
 
-double mean(uint64_t arr[]);
+double std(double * arr, double media);
 
-double std(uint64_t arr[], double media);
-
-void powerSequence(double arr[]);
+int powerSequence(double * arr, double * power);
 
 double threshold();
 
