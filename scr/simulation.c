@@ -1,14 +1,13 @@
+
+#include <user_config.h>
+#include <include/simulation.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <string.h>
 
-
-#include "user_config.h"
-#include "include/simulation.h"
-
-double arr[num_samples];
 
 FILE *  openFile(char *  name){
      FILE *  fp = fopen(name, "r");
@@ -19,7 +18,7 @@ FILE *  openFile(char *  name){
      return fp;
 }
 
-int readSamples(FILE * file_ptr){
+int readSamples(FILE * file_ptr, double * simulation_arr){
     size_t count = 0;
     if(count == 0){
        char buffer[100];
@@ -27,7 +26,7 @@ int readSamples(FILE * file_ptr){
        //printf("\n%s\n", buffer);
     }
     count = 0;
-    while(fscanf(file_ptr, "%lf,", &arr[count]) != EOF){
+    while(fscanf(file_ptr, "%lf,", &simulation_arr[count]) != EOF){
         if(count == num_samples){
             return 1;
         }
