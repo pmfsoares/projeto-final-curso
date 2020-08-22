@@ -6,3 +6,5 @@ wav_files/
 *.out
 *.csv
 *.gch
+json_output.json
+simul

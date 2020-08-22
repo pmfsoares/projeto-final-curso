@@ -52,6 +52,8 @@ void some_timerfunc(void *arg){
   }
 }
 
+enum states_t states = SETUP;
+
 void ICACHE_FLASH_ATTR user_init(){
   // init gpio subsytem
   gpio_init();
@@ -60,7 +62,7 @@ void ICACHE_FLASH_ATTR user_init(){
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_GPIO1); 
   gpio_output_set(0, 0, (1 << pin), 0);
   
-
+  state_engine(states);
   /* MQTT SETUP
   MQTT_InitConnection(&mqttClient, MQTT_HOST, MQTT_PORT, DEFAULT_SECURITY);
 
