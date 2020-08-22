@@ -1,147 +1,217 @@
-/*
- File       : fifo.h
- Created on : 3 June, 2013, 7:00 PM
- Description: This file contains all the API for operating with the FIFO.
- 
--------   BSD 2-Clause License ----------------------------
-Copyright (c) 2013, Arvind Devarajan <arvind dot devarajan at outlook dot com>
-All rights reserved.
+/*	Generic FIFO buffer Implementation
+	Copyright (C) 2014 Jesus Ruben Santa Anna Zamudio.
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-- Redistributions of source code must retain the above copyright notice, this 
-  list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice, 
-  this list of conditions and the following disclaimer in the documentation 
-  and/or other materials provided with the distribution.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)HOWEVER CAUSED
-AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	Author website: http://geekfactory.mx
+	Author e-mail: ruben at geekfactory dot mx
  */
 
-#include<stdint.h>
+/**
+ * Generic FIFO buffer Implementation.
+ * 
+ * Source code for the implementation of a FIFO buffer. The fifo can contain any
+ * type of data, including but not limited to: integers, floats, structures,
+ * arrays, etc.
+ * 
+ * This data structure can be used on a variety of situations, for example:
+ * It can be used with microcontroller peripherals for buffering, as a message
+ * or event queue, can be used for task synchronization or comunications 
+ * and more.
+ */
 
 #ifndef FIFO_H
-#define	FIFO_H
+#define FIFO_H
+/*-------------------------------------------------------------*
+ *		Includes and dependencies			*
+ *-------------------------------------------------------------*/
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-#ifdef	__cplusplus
+/*-------------------------------------------------------------*
+ *		Macros and definitions				*
+ *-------------------------------------------------------------*/
+
+#define FIFO_VERSION_STRING			"1.0.0"
+
+/*-------------------------------------------------------------*
+ *		Typedefs enums & structs			*
+ *-------------------------------------------------------------*/
+
+/**
+ * This structure holds the data that denfines a fifo buffer, and pointers
+ * to access data on the buffer
+ */
+struct fifo_descriptor {
+	/**
+	 * Start address on memory for item space.
+	 */
+	void * itemspace;
+	/** 
+	 * Size in bytes for each element in the buffer.
+	 */
+	size_t itemsize;
+	/**
+	 * Size in bytes of the whole buffer.
+	 */
+	size_t allocatedbytes;
+	/**
+	 * Memory offset from which we will read data.
+	 */
+	volatile uint16_t readoffset;
+	/**
+	 * Memory offset where data will be written.
+	 */
+	volatile uint16_t writeoffset;
+	/**
+	¨* Number of bytes used currently by stored items.
+	 */
+	volatile size_t storedbytes;
+};
+
+/**
+ * Defines the side of the buffer to perform some actions
+ */
+enum fifo_side {
+	E_FIFO_FRONT,
+	E_FIFO_BACK,
+};
+
+/**
+ * Definition for the fifo_t type, which is a pointer to a fifo_data struct
+ */
+typedef struct fifo_descriptor * fifo_t;
+
+/*-------------------------------------------------------------*
+ *		Function prototypes				*
+ *-------------------------------------------------------------*/
+
+#ifdef __cplusplus
 extern "C" {
-#endif        
-    /**
-     * Some of the functions return a boolean value
-     */
-    enum fbool {
-        FIFO_FALSE,
-        FIFO_TRUE
-    };
-    
-    typedef enum fbool fifo_bool;
-    
-    /**
-     * Result of some of the fifo calls.
-     */
-    enum result {
-        FIFO_FAIL = -1,        
-        FIFO_SUCC = 0
-    };
-    
-    typedef enum result fifo_result; 
-    typedef struct fifo *hfifo;
-    
-    /**
-     * This function is called automatically by the fifo_destroy() for every
-     * fifo element that it destroys. Since the type of fifo data element is
-     * user-defined, the user can release all resources held by the element
-     * in this function.
-     */
-    typedef void (*fifo_element_destroyfn)(void *);    
-        
-    /**
-     * Create a new fifo. This FIFO does does not impose any restriction
-     * on the type of data that it holds in each element. Hence, during the
-     * destruction of the FIFO, it needs a user-defined function to destroy
-     * individual element data. The FIFO will progressively call this function
-     * for every element that it destroys so that the user can do any frees
-     * needed for each data element.
-     * 
-     * @param fn Function that destroys an element data.
-     * @return FIFO handle.
-     */
-    hfifo fifo_create(fifo_element_destroyfn fn);
-    
-    /**
-     * Puts a data at the end of the fifo.
-     * 
-     * @param h FIFO handle as returned by fifo_create()
-     * @param pdata Pointer to the data to be held in the FIFO (cannot be NULL)
-     * @return FIFO_SUCC: Success; FIFO_FAIL: Failed.
-     */
-    fifo_result fifo_put(hfifo h, void *pdata);
-    
-    /**
-     * Get the data contained at the head of the FIFO. 
-     * This function removes the head element too.
-     * 
-     * @param h FIFO handle as returned by fifo_create()
-     * @return Data at the head of the FIFO or NULL if no more elements
-     */
-    void *fifo_get(hfifo h);
-    
-    /**
-     * Gets the next element in the FIFO.
-     * 
-     * This function can be used for iterating through the FIFO to keep getting
-     * all elements until we are at the end of the FIFO.
-     * 
-     * Usage:
-     *   void *pstate=NULL; // Very important to initialise this with NULL!!!
-     *   void *pdata;
-     * 
-     *   while ((pdata = fifo_get_next(h,&pstate)) != NULL) {
-     *       // Next data element is in pdata
-     *       // Do something...
-     *   }
-     * 
-     * @param h      FIFO handle as returned by fifo_create()
-     * @param ppstate  Internal state of the iteration (user should not change this,
-     *               and should just pass this to the function as it is).
-     * @return Data in the next element in the FIFO or NULL if no more elements.
-     */
-    void *fifo_get_next(hfifo h, void **ppstate);   
-    
-    /**
-     * Moves a data element from the fifo1 to fifo2. 
-     * 
-     * The function searches for the data pdata, removes it from
-     * fifo1, and then adds it to the fifo2.
-     * 
-     * @param h FIFO handle as returned by fifo_create
-     * @param pdata Data to be moved.
-     * @param fifo1 FIFO from which the element should be moved
-     * @param fifo2 FIFO to which the element should be added
-     * @return FIFO_SUCC: Success; FIFO_FAIL: Failed.
-     */
-    fifo_result fifo_move_element(void *pdata, hfifo fifo1, hfifo fifo2);        
-    
-    /**
-     * Releases all resources of the fifo.
-     * @param h FIFO handle as retuned by fifo_create
-     * @param fn Pointer to a function that destroys an element of fifo.
-     */
-    void fifo_destroy(hfifo h, fifo_element_destroyfn fn);
-    
-#ifdef	__cplusplus
+#endif
+	/**
+	 * @brief Creates a FIFO using dynamic memory
+	 *
+	 * This function is used to create a buffer, it allocates memory for a buffer of
+	 * the requested size plus the size of the structure that contains the
+	 * information requeried by other API functions to access that buffer.
+	 *
+	 * @param count The number of elements the buffer should be able to store
+	 * @param size The size in bytes for each element to be stored in the buffer
+	 *
+	 * @return If a buffer is succesfully created, returns a pointer to the
+	 * structure that contains the buffer information (fifo_t). NULL is returned if
+	 * something fails.
+	 */
+	fifo_t fifo_create(uint16_t count, size_t size);
+
+	/**
+	 * @brief Creates a statically allocated FIFO buffer
+	 *
+	 * This function is similar to fifo_create() but it difers from the last because
+	 * the memory allocation is static. A pointer to the buffer space and a pointer
+	 * to the control structure are required, both of them shoud be allocated 
+	 * statically by the programmer.
+	 *
+	 * @param fifo The pointer to the structure holding FIFO data
+	 * @param buf Pointer to the memory used to store actual fifo items
+	 * @param count The number of items to store on the FIFO
+	 * @param size The size in bytes of each item on the buffer
+	 *
+	 * @return This function performs some basic validation on the parameters passed,
+	 * if something is wrong with them,it will return NULL.
+	 */
+	fifo_t fifo_create_static(fifo_t fifo, void * buf, uint16_t count, size_t size);
+
+	/**
+	 * @brief Adds one item to the FIFO buffer
+	 *
+	 * This function writes an item to the fifo buffer back. This function affects
+	 * the write pointer and the stored items counter.
+	 *
+	 * The number of bytes to be copied to the fifo buffer was defined when the
+	 * fifo buffer was created with the function fifo_create() (size parameter).
+	 *
+	 * @param fifo Pointer to a fifo_descriptor structure.
+	 * @param item Pointer to a location that holds data to be written to the fifo
+	 * buffer.
+	 * 
+	 * @return  Returns true if there is space in the FIFO to add the item. If the
+	 * buffer is full and no data can be copied it returns false.
+	 */
+	bool fifo_add(fifo_t fifo, const void * item);
+
+	/**
+	 * @brief Obtains one item from the FIFO buffer.
+	 *
+	 * This function reads an item from the fifo buffer front. This function affects
+	 * the read pointer and the stored items counter.
+	 * 
+	 * The number of bytes to be copied to the provided buffer was defined when the
+	 * fifo buffer was created with the function fifo_create() (size parameter).
+	 * 
+	 * @param fifo Pointer to a fifo_descriptor structure.
+	 * @param item Pointer to a location to hold the data read from the fifo buffer,
+	 * this buffer should be sized appropiately to accomodate the data.
+	 * 
+	 * @return  Returns true if there is data available on the fifo buffer to be
+	 * copied, if the buffer is empty and no data can be read this returns false.
+	 */
+	bool fifo_get(fifo_t fifo, void * item);
+
+	/**
+	 * @brief Checks if the FIFO is full.
+	 *
+	 * Check if it can accept one item at least.
+	 *
+	 * @param fifo Pointer to a fifo_descriptor structure.
+	 *
+	 * @return This function returns true if the buffer is full, false otherwise.
+	 */
+	bool fifo_is_full(fifo_t fifo);
+
+	/**
+	 * @brief Checks if the FIFO is empty.
+	 *
+	 * Check if the buffer has no data stored in it.
+	 *
+	 * @param fifo Pointer to a fifo_descriptor structure.
+	 *
+	 * @return This function returns true if the buffer is empty, false otherwise.
+	 */
+	bool fifo_is_empty(fifo_t fifo);
+
+	/**
+	 * @brief Discard data from the buffer.
+	 *
+	 * This function discards data from the back or the front side of the buffer,
+	 * the side and the ammount of discarded data depends on the parameters passed.
+	 *
+	 * @param fifo Pointer to a fifo_descriptor structure.
+	 * @param count The number of elements to discard from the buffer.
+	 * @param side Defines if data should be discarted from the front or back side
+	 * of the buffer.
+	 * 
+	 * @return Returns true if the data was discarted, false if not.
+	 */
+	bool fifo_discard(fifo_t fifo, uint16_t count, enum fifo_side side);
+
+#ifdef __cplusplus
 }
 #endif
 
-#endif	/* FIFO_H */
-
+#endif
+// End of Header file

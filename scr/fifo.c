@@ -1,268 +1,148 @@
-/*
- File       : fifo.c
- Created on : 3 June, 2013, 8:43 PM
- Description:
+/*	Generic FIFO buffer Implementation
+	Copyright (C) 2014 Jesus Ruben Santa Anna Zamudio.
 
--------   BSD 2-Clause License ----------------------------
-Copyright (c) 2013, Arvind Devarajan <arvind dot devarajan at outlook dot com>
-All rights reserved.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-- Redistributions of source code must retain the above copyright notice, this 
-  list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice, 
-  this list of conditions and the following disclaimer in the documentation 
-  and/or other materials provided with the distribution.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)HOWEVER CAUSED
-AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	Author website: http://geekfactory.mx
+	Author e-mail: ruben at geekfactory dot mx
  */
+
 #include "fifo.h"
-#include <stdio.h>
-#include <malloc.h>
 
-/* Private data structures */
+/*-------------------------------------------------------------*
+ *		Private function prototypes			*
+ *-------------------------------------------------------------*/
+static void fifo_copy_from(fifo_t, void *);
+static void fifo_copy_to(fifo_t, const void *);
 
-/**
- * FIFO element.     
- */
-struct fifo_ele {
-    void *pdata; //! FIFO data element
-    struct fifo_ele *pnext; //! Next in the linked list
-    struct fifo_ele *pprev; //! Previous in the linked list
-};
-
-/**
- * Type of fifo element.
- */
-typedef struct fifo_ele fifo_element;
-
-/**
- * Main FIFO structure.
- *      
- * FIFO elements are connected in the FIFO like this:
- * 
- *    Tail      Prev   Next    Prev   Next   Head
- *        | E |<-----------|E|<-----------|E|
- */
-struct fifo {
-    fifo_element_destroyfn destroyfn; //! Element destroy function
-    fifo_element *phead;
-    fifo_element *ptail;
-};
-
-/* STATIC FUNCTIONS USED ONLY WITHIN THIS FILE */
-
-/**
- * Searches for a data in the fifo.
- * 
- * @param h FIFO handle as returned by fifo_create
- * @param pdata Data to be searched.
- * @return Pointer to the fifo element containing the data if the found; 
- * @return NULL otherwise.
- */
-static fifo_element *fifo_search(hfifo h, void *pdata) {
-    if (!h || !pdata)
-        return NULL;
-
-    // Start from the head element, and then keep going round until the data element
-    // to be searched is found.
-    fifo_element *pele = h->phead;
-
-    while (pele) {
-        if (pele->pdata == pdata)
-            return pele;
-        else
-            pele = pele->pnext;
-    }
-    return NULL;
+/*-------------------------------------------------------------*
+ *		Public API implementation			*
+ *-------------------------------------------------------------*/
+fifo_t fifo_create(uint16_t count, size_t size)
+{
+	fifo_t newfifo;
+	if (count > 0) {
+		newfifo = (struct fifo_descriptor *) malloc(sizeof(struct fifo_descriptor));
+		if (newfifo != NULL) {
+			// Calculate the size in bytes of the buffer
+			size_t bsize = count * size;
+			// Try to allocate space for the buffer data
+			newfifo->itemspace = malloc(bsize);
+			if (newfifo->itemspace != NULL) {
+				// Initialize structure members
+				newfifo->itemsize = size;
+				newfifo->allocatedbytes = bsize;
+				newfifo->readoffset = 0;
+				newfifo->writeoffset = 0;
+				newfifo->storedbytes = 0;
+				// Return the pointer to fifo_descriptor structure
+				return newfifo;
+			} else {
+				// Cannot allocate space for items, free struct resources
+				free(newfifo);
+			}
+		}
+	}
+	// Return NULL if something fails
+	return NULL;
 }
 
-/**
- * Removes a FIFO element containing the given data.
- * 
- * @param h Handle as returned by fifo_create
- * @param pdata Data to be searched and removed
- * @return FIFO element in which the data was found.
- */
-static fifo_element *fifo_remove_element(hfifo h, void *pdata) {
-    if (!h || !pdata)
-        return NULL;
-
-    // First search for the data element
-    fifo_element *pele = fifo_search(h, pdata);
-    if (!pele)
-        return NULL;
-
-    // If this element is the head element of the fifo, just get this
-    // element ("get") also removes the head, and readjusts pointers).
-    if (pele == h->phead) {
-        (void) fifo_get(h); // voiding return value as we dont need it.
-        return pele;
-    }
-
-    // Now, remove this element from the FIFO by adjusting the prev and
-    // the next pointers of the fifo elements.
-    fifo_element *pnext = pele->pnext; // The "next" element may not exist if
-    // this element happens to be the tail
-    // element of the fifo.
-    fifo_element *pprev = pele->pprev;
-    pprev->pnext = pnext; // THis could be NULL if the element we are removing is tail
-
-    // Adjust next pointer only if pnext exists (i.e., we are not removing the tail)
-    if (pnext)
-        pnext->pprev = pprev;
-    else {
-        // Adjust the tail of the fifo
-        h->ptail = pprev; // The previous element now becomes the tail too.
-    }
-
-    return pele;
+fifo_t fifo_create_static(fifo_t fifo, void * buf, uint16_t count, size_t size)
+{
+	// Sanity check for memory and element sizes
+	if (buf != NULL && fifo != NULL && count != 0) {
+		fifo->itemspace = buf;
+		fifo->itemsize = size;
+		fifo->allocatedbytes = count * size;
+		fifo->readoffset = 0;
+		fifo->writeoffset = 0;
+		fifo->storedbytes = 0;
+		return fifo;
+	}
+	return NULL;
 }
 
-/*---------------- Public functions, exposed via fifo.h ------------------- */
-
-hfifo fifo_create(fifo_element_destroyfn fn) {
-    hfifo pfifo;
-
-    if (!fn) {
-        return NULL;
-    }
-
-    pfifo = calloc(1, sizeof (struct fifo));
-    if (!pfifo)
-        return NULL;
-
-    pfifo->destroyfn = fn;
-    pfifo->phead = NULL;
-    pfifo->ptail = NULL;
-    return pfifo;
+bool fifo_add(fifo_t fifo, const void * item)
+{
+	if (!fifo_is_full(fifo)) {
+		fifo_copy_to(fifo, item);
+		fifo->storedbytes += fifo->itemsize;
+		return true;
+	} else {
+		return false;
+	}
 }
 
-fifo_result fifo_put(hfifo h, void *pdata) {
-    if (!h || !pdata)
-        return FIFO_FAIL;
-
-    fifo_element *pele = calloc(1, sizeof (fifo_element));
-    if (!pele)
-        return FIFO_FAIL;
-
-    pele->pdata = pdata;
-
-    if (!h->phead) {
-        // THis is the first element in the FIFO. Hence,
-        // this is both the head and the tail element of the FIFO.
-        h->phead = pele;
-        h->ptail = pele;
-
-        // This new element does not have a previous and the next elements
-        // as it is the only element in the fifo.
-        pele->pprev = pele->pnext = NULL;
-    } else {
-        // We already have some elements in the FIFO.
-        // Add this new element at the tail.
-        pele->pnext = NULL; // Since this is the tail element, there is no
-        // "next" element in the FIFO.
-
-        // To add this as the tail element, we first make the "previous" 
-        // element of this element to be the "current" tail element of this fifo.
-        pele->pprev = h->ptail;
-
-        // Finally, append this element to the end of the FIFO
-        h->ptail = pele;
-    }
-
-    return FIFO_SUCC;
+bool fifo_get(fifo_t fifo, void * item)
+{
+	if (!fifo_is_empty(fifo)) {
+		fifo_copy_from(fifo, item);
+		fifo->storedbytes -= fifo->itemsize;
+		return true;
+	} else {
+		return false;
+	}
 }
 
-void *fifo_get(hfifo h) {
-    if (!h)
-        return NULL;
-
-    // First, store the head element to be returned.
-    fifo_element *pele = h->phead; // This is the "current" head element
-    void *pdata = pele->pdata;
-
-    // Now, remove the head element from the fifo and 
-    // re-adjust all pointers.
-
-    // The next element of the current "head" element becomes
-    // the head element of the fifo.
-    h->phead = pele->pnext;
-
-    // The previous element of the new head element is now NULL, as there
-    // is no more element "before" the head element.
-    h->phead->pprev = NULL; // (the next element of the head element remains as before)
-
-    // Release this element
-    free(pele);
-
-    // Return the element data    
-    return pdata;
+bool fifo_is_full(fifo_t fifo)
+{
+	if (fifo->storedbytes >= fifo->allocatedbytes)
+		return true;
+	else
+		return false;
 }
 
-void *fifo_get_next(hfifo h, void **ppstate) {
-    if (!h || !ppstate)
-        return NULL;
-
-    fifo_element *pele = *ppstate;
-
-    // If pele is NULL, this is the first run of this iteration. Just
-    // return the data in the head element.
-    if (pele == NULL) {
-        *ppstate = h->phead;
-    } else {
-        // This is not the first iteration. Move the state to the next element
-        // and return data from the next element.
-        if (pele->pnext != NULL) {
-            *ppstate = pele->pnext;
-        } else {
-            return NULL;
-        }
-    }
-    pele = *ppstate;
-    return pele->pdata;
+bool fifo_is_empty(fifo_t fifo)
+{
+	if (fifo->storedbytes == 0)
+		return true;
+	else
+		return false;
 }
 
-fifo_result fifo_move_element(void *pdata, hfifo fifo1, hfifo fifo2) {
-    if (!pdata || !fifo1 || !fifo2)
-        return FIFO_FAIL;
-
-    // Remove this element from fifo1
-    fifo_element *pele = fifo_remove_element(fifo1, pdata);
-    if (!pele)
-        return FIFO_FAIL;
-
-    // Add this element in FIFO2
-    fifo_result ret = fifo_put(fifo2, pdata);
-
-    return ret;
+bool fifo_discard(fifo_t fifo, uint16_t count, enum fifo_side side)
+{
+	uint16_t t;
+	t = fifo->itemsize * count; // Compute byte size of elements to be deleted
+	if (t <= fifo->storedbytes) // Check if we can remove the requested ammount of data
+	{
+		if (side == E_FIFO_FRONT) {
+			fifo->readoffset = (fifo->readoffset + t) % fifo->allocatedbytes; // Increase read pointer n elements
+			fifo->storedbytes -= t; // Decrease stored bytes number
+		} else if (side == E_FIFO_BACK) {
+			fifo->writeoffset = (fifo->writeoffset - t) % fifo->allocatedbytes; // Decrease write pointer n elements
+			fifo->storedbytes -= t; // Decrease stored bytes number
+		}
+		return true;
+	}
+	return false;
 }
 
-void fifo_destroy(hfifo h, fifo_element_destroyfn fn) {
-    fifo_element *pcur = h->phead;
-    fifo_element *pnext;
-    
-    // Destroy all the fifo elements
-    while (pcur) {
-        pnext=pcur->pnext;
-        h->destroyfn(pcur->pdata); // Destroy fifo data using user-supplied destroy function
-        free(pcur);
-        pcur=pnext;
-    }
-    
-    // Finally, release the fifo
-    free(h);    
+static void fifo_copy_from(fifo_t fifo, void * item)
+{
+	memcpy(item, fifo->itemspace + fifo->readoffset, fifo->itemsize);
+	fifo->readoffset += fifo->itemsize;
+	if (fifo->readoffset >= fifo->allocatedbytes) {
+		fifo->readoffset = 0;
+	}
 }
 
-
+static void fifo_copy_to(fifo_t fifo, const void *item)
+{
+	memcpy(fifo->itemspace + fifo->writeoffset, item, fifo->itemsize);
+	fifo->writeoffset += fifo->itemsize;
+	if (fifo->writeoffset >= fifo->allocatedbytes) {
+		fifo->writeoffset = 0;
+	}
+}
