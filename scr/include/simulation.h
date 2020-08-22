@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
 
 FILE * openFile(char * name);
 

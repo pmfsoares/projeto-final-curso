@@ -47,7 +47,6 @@ LOCAL void wifi_init(){
 
 }
 
-
 /**
  * @brief 
  * @param arg

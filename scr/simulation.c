@@ -28,9 +28,10 @@ int readSamples(FILE * file_ptr, double * simulation_arr){
     count = 0;
     while(fscanf(file_ptr, "%lf,", &simulation_arr[count]) != EOF){
         if(count == num_samples){
-            return 1;
+            
+            return count;
         }
         count++;
     }
-    return 1;
+    return count;
 }

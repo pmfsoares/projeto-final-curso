@@ -1,7 +1,8 @@
 build/
 firmware/
+wav_files/
+.vscode/
 *.o
 *.out
-.vscode/
 *.csv
 *.gch
