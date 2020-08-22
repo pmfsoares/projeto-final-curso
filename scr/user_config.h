@@ -5,11 +5,11 @@
 
 /*DEFAULT CONFIGURATIONS*/
 
-#define MQTT_HOST     "test.mosquitto.org" //or "mqtt.yourdomain.com"
-#define MQTT_PORT     1883
-#define MQTT_BUF_SIZE   1024
+#define MQTT_HOST     "192.168.1.80" //or "mqtt.yourdomain.com"
+#define MQTT_PORT     "1883"
+#define MQTT_BUF_SIZE  340000
 #define MQTT_KEEPALIVE    120  /*second*/
-#define MQTT_CLIENT_ID    "sensor_mic"
+#define MQTT_CLIENT_ID    "sensor_esp8266"
 #define MQTT_USER     "USER"
 #define MQTT_PASS     "PASS"
 #define MQTT_CLEAN_SESSION 1
