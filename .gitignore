@@ -1,10 +1,11 @@
-build/
-firmware/
+sensor/build/
+sensor/firmware/
+sensor/json_output.json
+
 wav_files/
 .vscode/
 *.o
 *.out
 *.csv
 *.gch
-json_output.json
 simul
