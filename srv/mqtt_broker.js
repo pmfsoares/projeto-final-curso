@@ -1,16 +1,7 @@
+const aedes = require('aedes')()
+const server = require('net').createServer(aedes.handle)
+const port = 1883
 
-var mqttServer = require('mqtt-server');
-
-var servers = mqttServer({
-  mqtt: 'tcp://localhost:1883',
-}, {
-  emitEvents: true // default
-}, function(client){
-  client.connack({
-    returnCode: 0
-  });
-});
-
-servers.listen(function(){
-  console.log('listening!');
-});
+server.listen(port, function () {
+  console.log('server started and listening on port ', port)
+})
