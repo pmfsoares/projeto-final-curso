@@ -128,8 +128,8 @@ $(BUILD_DIR):
 $(FW_BASE):
 	$(Q) mkdir -p $@
 
-simul: scr/simulation_main.c scr/simulation.c scr/state_machine.c scr/detection.c
-	gcc -Wall -o $@ $^ -I scr/include -I scr -lm
+simul: scr/simulation_main.c scr/simulation.c scr/state_machine.c scr/detection.c scr/cJSON.c scr/dataPacket.c scr/mqtt_simul.c scr/mqtt_pal_simul.c scr/fifo.c
+	gcc -Wall -o $@ $^ -I scr/include -I scr -lm -lpthread
 
 
 clean_simul:
