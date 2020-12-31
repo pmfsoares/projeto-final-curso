@@ -1,7 +1,14 @@
 sensor/build/
 sensor/firmware/
 sensor/json_output.json
+mqtt-srv/create_tables.js
+mqtt-srv/mac_gen.js
+mqtt-srv/random_macs
 
+web/angular/
+web/bootstrap/
+web/tablesorter/
+web/wav_files/
 wav_files/
 .vscode/
 *.o
