@@ -19,7 +19,11 @@
  */
 
 #include "fifo.h"
+#include "user_config.h"
 
+#ifndef SIMULATION
+	#include <mem.h>
+#endif
 /*-------------------------------------------------------------*
  *		Private function prototypes			*
  *-------------------------------------------------------------*/
@@ -33,12 +37,23 @@ fifo_t fifo_create(uint16_t count, size_t size)
 {
 	fifo_t newfifo;
 	if (count > 0) {
-		newfifo = (struct fifo_descriptor *) malloc(sizeof(struct fifo_descriptor));
+		#ifdef SIMULATION
+			newfifo = (struct fifo_descriptor *) malloc(sizeof(struct fifo_descriptor));
+		#endif
+		#ifndef SIMULATION
+			newfifo = (struct fifo_descriptor *) os_malloc(sizeof(struct fifo_descriptor));
+		#endif
 		if (newfifo != NULL) {
 			// Calculate the size in bytes of the buffer
 			size_t bsize = count * size;
 			// Try to allocate space for the buffer data
-			newfifo->itemspace = malloc(bsize);
+			#ifdef SIMULATION
+				newfifo->itemspace = malloc(bsize);
+			#endif
+			#ifndef SIMULATION
+				newfifo->itemspace = os_malloc(bsize);
+			#endif
+			
 			if (newfifo->itemspace != NULL) {
 				// Initialize structure members
 				newfifo->itemsize = size;
@@ -50,7 +65,12 @@ fifo_t fifo_create(uint16_t count, size_t size)
 				return newfifo;
 			} else {
 				// Cannot allocate space for items, free struct resources
-				free(newfifo);
+				#ifdef SIMULATION
+					free(newfifo);
+				#endif
+				#ifndef SIMULATION
+					os_free(newfifo);
+				#endif
 			}
 		}
 	}

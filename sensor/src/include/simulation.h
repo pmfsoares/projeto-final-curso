@@ -9,9 +9,10 @@
 #include <errno.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 FILE * openFile(char * name);
 
-int readSamples(FILE * file_ptr, double * simulation_arr);
+int readSamples(FILE * file_ptr, double * simulation_arr, int type, uint16_t num_samples);
 
 #endif

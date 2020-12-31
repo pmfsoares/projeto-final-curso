@@ -32,10 +32,10 @@ ESPPORT     ?= /dev/ttyUSB0
 TARGET      = projeto_header
 
 # which modules (subdirectories) of the project to include in compiling
-MODULES     = scr src/include mqtt mqtt/include
+MODULES     = src src/include mqtt mqtt/include
 EXTRA_INCDIR = 
 # libraries used in this project, mainly provided by the SDK
-LIBS        = c gcc hal pp phy net80211 lwip wpa main m 
+LIBS        = c gcc hal pp phy net80211 lwip wpa main m ssl mbedtls  
 
 # compiler flags using during compilation of source files
 CFLAGS      = --std=gnu99 -Os -g -O2 -Wpointer-arith -Wundef -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH -DUSE_US_TIMER -D__TARGET_ESP__
@@ -73,6 +73,8 @@ SDK_LIBDIR  := $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
 SDK_INCDIR  := $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
 
 SRC     := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
+EXCLUDES = src/simulation.c src/simulation_main.c src/mqtt_simul.c src/mqtt_pal_simul.c
+SRC := $(filter-out $(EXCLUDES), $(SRC))
 OBJ     := $(patsubst %.c,$(BUILD_BASE)/%.o,$(SRC))
 LIBS        := $(addprefix -l,$(LIBS))
 APP_AR      := $(addprefix $(BUILD_BASE)/,$(TARGET)_app.a)
@@ -84,8 +86,8 @@ INCDIR  := $(addprefix -I,$(SRC_DIR))
 EXTRA_INCDIR    := $(addprefix -I,$(EXTRA_INCDIR))
 MODULE_INCDIR   := $(addsuffix /include,$(INCDIR))
 
-FW_FILE_1   := $(addprefix $(FW_BASE)/,$(TARGET),$(FW_FILE_1_ADDR).bin)
-FW_FILE_2   := $(addprefix $(FW_BASE)/,$(TARGET),$(FW_FILE_2_ADDR).bin)
+FW_FILE_1   := $(addprefix $(FW_BASE)/,$(TARGET)_$(FW_FILE_1_ADDR).bin)
+FW_FILE_2   := $(addprefix $(FW_BASE)/,$(TARGET)_$(FW_FILE_2_ADDR).bin)
 
 V ?= $(VERBOSE)
 ifeq ("$(V)","1")
@@ -128,13 +130,17 @@ $(BUILD_DIR):
 $(FW_BASE):
 	$(Q) mkdir -p $@
 
-simul: scr/simulation_main.c scr/simulation.c scr/state_machine.c scr/detection.c scr/cJSON.c scr/dataPacket.c scr/mqtt_simul.c scr/mqtt_pal_simul.c scr/fifo.c
-	gcc -Wall -o $@ $^ -I scr/include -I scr -lm -lpthread
+simul: src/simulation_main.c src/simulation.c src/state_machine.c src/detection.c src/cJSON.c src/dataPacket.c src/mqtt_simul.c src/mqtt_pal_simul.c src/fifo.c 
+	gcc -Wall -o $@ $^ -ggdb -I src/include -I src/include_simul -I src -lm -lpthread
 
 
 clean_simul:
 
 	rm -f ./simul
+
+erase_flash:
+	$(ESPTOOL) --port $(ESPPORT) write_flash 0x3FE000 $(SDK_BASE)/bin/blank.bin
+	$(ESPTOOL) --port $(ESPPORT) write_flash 0x3FC000 $(SDK_BASE)/bin/esp_init_data_default.bin
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
 	$(ESPTOOL) --port $(ESPPORT) write_flash $(FW_FILE_1_ADDR) $(FW_FILE_1) $(FW_FILE_2_ADDR) $(FW_FILE_2)

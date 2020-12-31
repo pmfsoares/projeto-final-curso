@@ -1,3 +1,13 @@
+/**
+ * @file network.c
+ * @author Pedro Soares (p.soares1997@live.com.pt) @ Projeto EI - ESTG IPP
+ * @brief Sensor wifi connection
+ * @version 0.1
+ * @date 2020-12-03
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
 #include "network.h"
 
 #include "c_types.h"
@@ -6,88 +16,31 @@
 #include "ets_sys.h"
 #include "gpio.h"
 #include "espconn.h"
+#include "mqtt.h"
+#include "dataPacket.h"
+#include "state_machine.h"
 
-LOCAL struct espconn udp_tx;
-LOCAL struct espconn udp_conn;
-LOCAL esp_udp udp_proto_tx;
-LOCAL esp_udp udp_proto;
 
-LOCAL struct espconn tcp_conn;
-LOCAL esp_tcp tcp_proto;
 
-LOCAL ip_addr_t esp_ip;
+ip_addr_t esp_ip;
 
 /**
- * @brief Função que inicializa Wifi
- * @return 
+ * @brief Callback function for when the device recieves a mqtt message
+ * 
+ * @param args 
  */
-LOCAL void wifi_init(){
-
-  char ssid[32] = AP_SSID;
-  char password[64] = AP_PASSWORD;
-
-  struct station_config stationConf;
-
-
-  wifi_set_opmode(STATION_MODE);
-
-  os_memcpy(&stationConf.ssid, ssid, 32);
-  os_memcpy(&stationConf.password, password, 64);
-  wifi_station_set_config(&stationConf);
-  wifi_station_dhcpc_stop();
-
-  struct ip_info info;
-
-  IP4_ADDR(&info.ip,      192, 168,   1, 172);
-  IP4_ADDR(&info.gw,      192, 168,   1,   1);
-  IP4_ADDR(&info.netmask, 255, 255, 255,   0);
-
-  wifi_set_ip_info(STATION_IF, &info);
-  wifi_set_event_handler_cb(wifi_event_cb);
-
+void ICACHE_FLASH_ATTR mqttPublishedCb(uint32_t *args){
+  MQTT_Client* client = (MQTT_Client*)args;
+  INFO("MQTT: Published\r\n");
 }
 
-/**
- * @brief 
- * @param arg
- * @return 
- */
-LOCAL void ICACHE_FLASH_ATTR tcp_connect_cb(void *arg){
-  struct espconn *conn = (struct espconn *) arg;
-  os_printf("TCP connected\n");
-  espconn_regist_recvcb(conn, recv_cb);
-}
-/**
- * @brief Função de para envio de dados em pacotes com UDP
- * @param data    Dados
- * @param len     Tamanho dos dados
- * @param ip_addr IP de destino
- * @return 
- */
-LOCAL void ICACHE_FLASH_ATTR udp_tx_data(uint8_t *data, uint16_t len, uint32_t ip_addr){
-  ip_addr_t addr;
-  IP4_ADDR(&addr, 192, 168, 1, 80);
-  os_memcpy(udp_proto_tx.remote_ip, &addr.addr, 4);
-  udp_proto_tx.remote_port = 1234;
-  os_printf("\ndest.ip = "IPSTR"\n", IP2STR(&addr.addr));
-  udp_tx.type = ESPCONN_UDP;
-  udp_tx.state = ESPCONN_NONE;
-  udp_tx.proto.udp = &udp_proto_tx;
 
-  if(espconn_create(&udp_tx)){
-    os_printf("espconn_create failed\n");
-  }
-  if(espconn_send(&udp_tx, data, len)){ 
-    os_printf("espconn_sendto failed\n");
-  }
-  espconn_delete(&udp_tx);
-}
 /**
- * @brief 
- * @param event
+ * @brief Wifi event callback function, it receives an system event and if receives event that system as an IP connects the MQTT client to the broker 
+ * @param event System event
  * @return 
  */
-LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
+void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
     struct ip_info info;
 
     // To determine what actually happened, we need to look at the event.
@@ -125,6 +78,19 @@ LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
                       IP2STR(&event->event_info.got_ip.ip.addr), 
                       IP2STR(&event->event_info.got_ip.mask.addr),
                       IP2STR(&event->event_info.got_ip.gw));
+            os_printf("GOT IP\n");
+            /**
+             * @brief NTP Server setup
+             * 
+             */
+            //ip_addr_t *addr_ntp = (ip_addr_t *) os_zalloc(sizeof(ip_addr_t));
+            sntp_setservername(0, "time.google.com");
+            sntp_set_timezone(0);
+            //ipaddr_aton("216.239.35.0", addr);
+            //sntp_setserver(1, addr);
+            sntp_init();
+            //os_free(addr_ntp);
+            MQTT_Connect(&mqttClient);
             break;
         case EVENT_STAMODE_DHCP_TIMEOUT:
             // We couldn't get an IP address via DHCP, so we'll have to try re-connecting.
@@ -134,8 +100,44 @@ LOCAL void ICACHE_FLASH_ATTR wifi_event_cb(System_Event_t *event) {
             break;
     }
 }
+/**
+ * @brief Wifi initializer function
+ * @return 
+ */
+void ICACHE_FLASH_ATTR wifi_init(){
 
-LOCAL void ICACHE_FLASH_ATTR recv_cb(void *arg, char *data, uint16_t len){
+  char ssid[32] = AP_SSID;
+  char password[64] = AP_PASSWORD;
+
+  struct station_config stationConf;
+
+
+  wifi_set_opmode(STATION_MODE);
+
+  strncpy(&stationConf.ssid, AP_SSID, 32);
+  strncpy(&stationConf.password, AP_PASSWORD, 64);
+  wifi_station_set_config(&stationConf);
+  wifi_station_dhcpc_stop();
+
+  struct ip_info info;
+
+  IP4_ADDR(&info.ip,      192, 168,   12, 172);
+  IP4_ADDR(&info.gw,      192, 168,   12,   1);
+  IP4_ADDR(&info.netmask, 255, 255, 255,   0);
+
+  wifi_set_ip_info(STATION_IF, &info);
+  wifi_set_event_handler_cb(wifi_event_cb);
+
+}
+
+
+/**
+ * @brief 
+ * @param event
+ * @return 
+ */
+
+void ICACHE_FLASH_ATTR recv_cb(void *arg, char *data, uint16_t len){
   struct espconn *conn = (struct espconn *) arg;
   uint8_t *addr_array = NULL;
   if(conn -> type == ESPCONN_TCP){
@@ -150,3 +152,4 @@ LOCAL void ICACHE_FLASH_ATTR recv_cb(void *arg, char *data, uint16_t len){
     os_printf("%s", data);
   }
 }
+

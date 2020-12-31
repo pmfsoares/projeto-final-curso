@@ -804,7 +804,6 @@ MQTT_InitClient(MQTT_Client *mqttClient, uint8_t* client_id, uint8_t* client_use
   MQTT_INFO("MQTT:InitClient\r\n");
 
   os_memset(&mqttClient->connect_info, 0, sizeof(mqtt_connect_info_t));
-
   if ( !client_id )
   {
     /* Should be allowed by broker, but clean session flag must be set. */
@@ -853,12 +852,13 @@ MQTT_InitClient(MQTT_Client *mqttClient, uint8_t* client_id, uint8_t* client_use
   mqttClient->connect_info.keepalive = keepAliveTime;
   mqttClient->connect_info.clean_session = cleanSession;
 
+  MQTT_INFO("BEFORE POINTER ZALLOC\n");
   mqttClient->mqtt_state.in_buffer = (uint8_t *)os_zalloc(MQTT_BUF_SIZE);
   mqttClient->mqtt_state.in_buffer_length = MQTT_BUF_SIZE;
   mqttClient->mqtt_state.out_buffer =  (uint8_t *)os_zalloc(MQTT_BUF_SIZE);
   mqttClient->mqtt_state.out_buffer_length = MQTT_BUF_SIZE;
   mqttClient->mqtt_state.connect_info = &mqttClient->connect_info;
-
+  MQTT_INFO("AFTER POINTER ZALLOC\n");
   mqtt_msg_init(&mqttClient->mqtt_state.mqtt_connection, mqttClient->mqtt_state.out_buffer, mqttClient->mqtt_state.out_buffer_length);
 
   QUEUE_Init(&mqttClient->msgQueue, QUEUE_BUFFER_SIZE);
