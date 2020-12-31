@@ -1,0 +1,21 @@
+{
+    "original_file" : "8khz_9_mm_gunshot_mono_ext_E1_original.wav",
+    "distances": [
+        {
+            "id": "d1",
+            "value": "17.20"
+        },
+        {
+            "id": "d2",
+            "value": "24.41"
+        },
+        {
+            "id": "d3",
+            "value": "25.61"
+        },
+        {
+            "id": "d4",
+            "value": "18.86"
+        }
+    ]
+}
