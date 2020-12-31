@@ -5,6 +5,8 @@ mqtt-srv/create_tables.js
 mqtt-srv/mac_gen.js
 mqtt-srv/random_macs
 
+data_analysis/**/*.csv
+
 web/angular/
 web/bootstrap/
 web/tablesorter/
@@ -14,5 +16,6 @@ wav_files/
 *.o
 *.out
 *.csv
+!dataset/**/*.csv
 *.gch
 simul
